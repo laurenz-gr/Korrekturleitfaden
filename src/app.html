@@ -1,0 +1,577 @@
+<title>Korrekturleitfaden</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: Seitenleiste mit Sunny, Modus und Arbeitszähler | Hauptspalte mit Bereichskacheln (sticky) und Checklisten-Karten.
+   Sunny-Prinzip: schwarze Kontur, weiße Fläche, Blau nur für „ausgewählt / erledigt“. */
+:root {
+  --bg: #F3F5F9;
+  --surface: #FFFFFF;
+  --ink: #111318;
+  --muted: #586074;
+  --line: #111318;
+  --hair: #D8DDE7;
+  --accent: #0A5CEB;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E7EEFD;
+  --sunny-filter: none;
+  --display: "Bricolage Grotesque", "Atkinson Hyperlegible", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r: 14px;
+  --stroke: 2px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1014; --surface: #171A21; --ink: #EDF0F6; --muted: #A4ABBB; --line: #EDF0F6;
+    --hair: #2B303B; --accent: #5E8FFF; --accent-ink: #0B0D12; --accent-soft: #1B2642;
+    --sunny-filter: drop-shadow(0 0 1px #EDF0F6) drop-shadow(0 0 1px #EDF0F6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1014; --surface: #171A21; --ink: #EDF0F6; --muted: #A4ABBB; --line: #EDF0F6;
+  --hair: #2B303B; --accent: #5E8FFF; --accent-ink: #0B0D12; --accent-soft: #1B2642;
+  --sunny-filter: drop-shadow(0 0 1px #EDF0F6) drop-shadow(0 0 1px #EDF0F6);
+  color-scheme: dark;
+}
+
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: var(--body); font-size: 1.0625rem; line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.app {
+  display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 20px; align-items: start;
+  max-width: 1320px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 40px;
+}
+
+/* ---------- Seitenleiste ---------- */
+.side {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.brand { font-family: var(--display); font-weight: 800; font-size: 1.45rem; line-height: 1.05; letter-spacing: -0.01em; text-wrap: balance; }
+.brand small { display: block; font-family: var(--body); font-weight: 400; font-size: 0.85rem; color: var(--muted); letter-spacing: 0; margin-top: 4px; }
+
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: var(--stroke) solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--surface); }
+.seg button { border-radius: 999px; padding: 8px 6px; font-weight: 700; font-size: 0.95rem; min-height: 40px; }
+.seg button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); }
+.mode-note { font-size: 0.82rem; color: var(--muted); margin: -4px 2px 0; }
+
+.arbeit {
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 12px;
+  border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); padding: 10px 12px;
+}
+.arbeit .lbl { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.arbeit .nr { font-family: var(--display); font-weight: 800; font-size: 2rem; line-height: 1; font-variant-numeric: tabular-nums; grid-row: span 2; }
+.arbeit .done { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.btn-next {
+  grid-column: 1 / -1; margin-top: 6px; border: var(--stroke) solid var(--line); border-radius: 999px;
+  padding: 9px 12px; font-weight: 700; min-height: 44px; background: var(--ink); color: var(--surface);
+}
+.btn-next:active { transform: translateY(1px); }
+
+.sunny { margin: 0; display: flex; justify-content: center; }
+.sunny img { height: clamp(220px, 42vh, 440px); width: auto; filter: var(--sunny-filter); transition: opacity .25s ease; }
+.sunny img.swap { opacity: 0; }
+
+.side-links { display: flex; flex-direction: column; gap: 8px; }
+.link-btn { text-align: left; font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; min-height: 32px; }
+.wake { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; min-height: 32px; }
+.wake input { width: 20px; height: 20px; accent-color: var(--accent); }
+.wake .st { color: var(--muted); font-size: 0.8rem; }
+.sources { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+
+/* ---------- Kacheln ---------- */
+.main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.tiles-wrap { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 8px; margin-block: -8px 0; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.tile {
+  position: relative; text-align: left; border: var(--stroke) solid var(--line); border-radius: var(--r);
+  background: var(--surface); padding: 9px 12px 10px; min-height: 64px; display: flex; flex-direction: column; justify-content: center;
+}
+.tile b { font-family: var(--display); font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
+.tile span { font-size: 0.8rem; color: var(--muted); line-height: 1.2; }
+.tile[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.tile[aria-pressed="true"] b { color: var(--accent); }
+.tile .prog {
+  position: absolute; top: 8px; right: 9px; font-size: 0.75rem; font-weight: 700; font-variant-numeric: tabular-nums;
+  border-radius: 999px; padding: 1px 8px; background: var(--accent); color: var(--accent-ink);
+}
+.tile .prog.full::before { content: "✓ "; }
+
+/* ---------- Karten ---------- */
+.area { border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); scroll-margin-top: 160px; overflow: hidden; }
+.area-head { padding: 14px 16px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; border-bottom: 1px solid var(--hair); }
+.area-head h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 1.4rem; line-height: 1.15; text-wrap: balance; }
+.area-head h2 span { font-weight: 600; color: var(--muted); font-size: 1.05rem; }
+.area-head .ops { grid-column: 1 / -1; margin: 0; font-size: 0.9rem; color: var(--muted); }
+.count { font-size: 0.85rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+.count.full { color: var(--accent); }
+
+.stage { padding: 12px 16px 14px; border-bottom: 1px solid var(--hair); display: flex; flex-direction: column; gap: 10px; }
+.k-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.seg6 { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.seg6 button {
+  border: var(--stroke) solid var(--line); border-radius: 12px; padding: 5px 2px 6px; min-height: 52px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.seg6 b { font-family: var(--display); font-size: 1.3rem; font-weight: 800; line-height: 1; }
+.seg6 small { font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.seg6 button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.seg6 button[aria-checked="true"] small { color: var(--accent-ink); opacity: .9; }
+.pct { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.words { display: flex; flex-wrap: wrap; gap: 6px; }
+.word { border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 0.95rem; min-height: 36px; line-height: 1.2; }
+.word[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.stage-empty { font-size: 0.9rem; color: var(--muted); margin: 0; }
+
+.checks { list-style: none; margin: 0; padding: 4px 0; }
+.check {
+  width: 100%; text-align: left; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px;
+  padding: 12px 16px; align-items: start; min-height: 56px;
+}
+.checks li + li .check { border-top: 1px solid var(--hair); }
+.box { width: 28px; height: 28px; border: var(--stroke) solid var(--line); border-radius: 50%; display: grid; place-items: center; margin-top: 1px; }
+.box svg { width: 16px; height: 16px; opacity: 0; }
+.check[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+.check[aria-checked="true"] .box svg { opacity: 1; stroke: var(--accent-ink); }
+.check[aria-checked="true"] .txt { opacity: .55; }
+.txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.baustein { font-size: 1.02rem; }
+.leit { font-size: 0.9rem; color: var(--muted); }
+.leit b { color: var(--ink); font-weight: 700; }
+.opt-tag { display: inline-block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; border: 1px dashed var(--muted); color: var(--muted); border-radius: 999px; padding: 0 7px; margin-right: 6px; vertical-align: 1px; }
+.slot { border-bottom: 2px solid var(--accent); padding: 0 2px; font-weight: 700; color: var(--accent); }
+.slot.empty { color: var(--muted); font-weight: 400; }
+.ph { font-style: italic; color: var(--muted); }
+
+.rand { border-top: 1px solid var(--hair); }
+.rand summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 48px; }
+.rand summary::-webkit-details-marker { display: none; }
+.rand summary .k-label::after { content: " ▸"; }
+.rand[open] summary .k-label::after { content: " ▾"; }
+.signs { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 0.85rem; color: var(--muted); justify-content: flex-end; }
+.sign b { display: inline-block; background: var(--ink); color: var(--surface); border-radius: 5px; padding: 0 6px; font-family: var(--display); font-weight: 800; margin-right: 3px; }
+.rand-list { list-style: none; margin: 0; padding: 0 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+.rk { display: grid; grid-template-columns: 26px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; font-size: 0.95rem; }
+.rk.one { grid-template-columns: 26px minmax(0, 1fr); }
+.mark { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: 0.95rem; line-height: 1; }
+.mark.plus { background: var(--ink); color: var(--surface); }
+.anrede { color: var(--muted); }
+.rk-head { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+
+.hint { margin: 0 16px 14px; padding: 10px 12px; border-radius: 10px; background: var(--bg); font-size: 0.88rem; display: flex; flex-direction: column; gap: 4px; }
+.hint b { font-weight: 700; }
+.card-foot { display: flex; justify-content: flex-end; padding: 0 16px 12px; }
+.card-foot button { font-size: 0.85rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; min-height: 36px; }
+
+.empty {
+  border: var(--stroke) dashed var(--hair); border-radius: var(--r); padding: 28px 20px; text-align: center; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.empty strong { font-family: var(--display); font-size: 1.25rem; color: var(--ink); }
+
+/* ---------- Dialog & Toast ---------- */
+dialog { border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); padding: 0; width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
+dialog::backdrop { background: rgba(10, 12, 18, .45); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--hair); position: sticky; top: 0; background: var(--surface); }
+.dlg-head h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 1.3rem; }
+.dlg-head button { border: var(--stroke) solid var(--line); border-radius: 999px; padding: 6px 14px; font-weight: 700; min-height: 40px; }
+.dlg-body { padding: 14px 18px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.dlg-body h3 { margin: 0 0 6px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.dlg-body dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: baseline; font-size: 0.95rem; }
+.dlg-body dt b { display: inline-block; background: var(--ink); color: var(--surface); border-radius: 5px; padding: 0 6px; font-family: var(--display); font-weight: 800; }
+.dlg-body dd { margin: 0; }
+.dlg-note { grid-column: 1 / -1; font-size: 0.8rem; color: var(--muted); margin: 0; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); z-index: 20;
+  background: var(--ink); color: var(--surface); border-radius: 999px; padding: 8px 8px 8px 18px;
+  display: flex; gap: 14px; align-items: center; font-size: 0.95rem; max-width: calc(100vw - 32px);
+}
+.toast button { background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 14px; font-weight: 700; min-height: 36px; }
+
+/* ---------- Responsiv ---------- */
+@media (min-width: 1300px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .app { grid-template-columns: 196px minmax(0, 1fr); gap: 16px; } .brand { font-size: 1.25rem; } }
+@media (max-width: 720px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .brand, .mode-note, .side-links, .sources { grid-column: 1 / -1; }
+  .sunny { display: none; }
+  .arbeit { grid-column: 2; grid-row: 2 / span 2; }
+  .seg { grid-column: 1; }
+  .mode-note { grid-column: 1; margin: 0; }
+  .side-links { flex-direction: row; flex-wrap: wrap; gap: 4px 18px; }
+  .sources { display: none; }
+}
+@media (max-width: 520px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .side { grid-template-columns: minmax(0, 1fr); }
+  .arbeit, .seg, .mode-note { grid-column: 1; grid-row: auto; }
+  .rk { grid-template-columns: 26px minmax(0, 1fr); }
+  .rk .anrede { grid-column: 2; }
+  .rk-head { display: none; }
+  .dlg-body { grid-template-columns: minmax(0, 1fr); }
+  .seg6 small { font-size: 0.66rem; }
+}
+@media (prefers-reduced-motion: reduce) { .sunny img { transition: none; } }
+</style>
+
+<div class="app">
+  <aside class="side" aria-label="Einstellungen">
+    <div class="brand">Korrektur&shy;leitfaden<small>Klausuren und Abitur</small></div>
+
+    <div class="seg" role="radiogroup" aria-label="Prüfungsart" id="modeSeg">
+      <button type="button" role="radio" id="mode-klausur" data-mode="klausur">Klausur</button>
+      <button type="button" role="radio" id="mode-abitur" data-mode="abitur">Abitur</button>
+    </div>
+    <p class="mode-note" id="modeNote"></p>
+
+    <div class="arbeit">
+      <span class="nr" id="arbeitNr">1</span>
+      <span class="lbl">Arbeit</span>
+      <span class="done" id="doneCount">0 abgehakt</span>
+      <button type="button" class="btn-next" id="nextBtn">Nächste Arbeit</button>
+    </div>
+
+    <figure class="sunny"><img id="sunnyImg" alt="Sunny, die Leitfigur des Korrekturleitfadens" src=""></figure>
+
+    <div class="side-links">
+      <button type="button" class="link-btn" id="zeichenBtn">Alle Korrekturzeichen</button>
+      <label class="wake"><input type="checkbox" id="wakeChk"> Bildschirm wach halten <span class="st" id="wakeSt"></span></label>
+    </div>
+    <p class="sources">Rechtsgrundlagen: AV Prüfungen Nr. 10, 20 · VO-GO § 14, 15 · KMK-Vereinbarung Ziff. 8.4.3 · EPA Geographie § 2, 3.5</p>
+  </aside>
+
+  <main class="main">
+    <div class="tiles-wrap"><nav class="tiles" id="tiles" aria-label="Bereich der Teilaufgabe"></nav></div>
+    <div id="sections" class="main"></div>
+  </main>
+</div>
+
+<dialog id="zeichenDlg" aria-labelledby="zeichenTitle">
+  <div class="dlg-head"><h2 id="zeichenTitle">Korrekturzeichen</h2><button type="button" id="zeichenClose">Schließen</button></div>
+  <div class="dlg-body" id="zeichenBody"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastUndo">Rückgängig</button></div>
+
+<script>
+const IMG = {
+  pruefen: "{{IMG:sunny-pruefen}}",
+  verknuepfen: "{{IMG:sunny-verknuepfen}}",
+  willkommen: "{{IMG:sunny-willkommen}}",
+  liste: "{{IMG:sunny-liste}}"
+};
+
+/* Notenbereiche: Schlüsselwörter für schriftliche Prüfungen, Mindestanteile nach AV Prüfungen Nr. 20 */
+const STAGES = [
+  { n: 1, pts: "15–13", pct: "15 ≥ 95 % · 14 ≥ 90 % · 13 ≥ 85 %", words: ["hervorragend","sehr","äußerst","durchgängig","souverän","deutlich","vorbildlich","klar","optimal","treffend","höchst","verlässlich","überaus","Maßstäbe setzend","ausgezeichnet","auf höchstem Niveau","herausragend","besonders ausgeprägt","in hohem Maße"] },
+  { n: 2, pts: "12–10", pct: "12 ≥ 80 % · 11 ≥ 75 % · 10 ≥ 70 %", words: ["stets","tragfähig","ernsthaft","überzeugend","erfolgreich","voll und ganz","auf hohem Niveau","konsequent","ausgeprägt"] },
+  { n: 3, pts: "9–7", pct: "9 ≥ 65 % · 8 ≥ 60 % · 7 ≥ 55 %", words: ["überwiegend","im Allgemeinen","in der Regel","stellenweise ungenau","prinzipiell","gelungen","angemessen","recht","durchaus","solide","relativ","bedingt","im Wesentlichen","weitgehend"] },
+  { n: 4, pts: "6–4", pct: "6 ≥ 50 % · 5 ≥ 45 % · 4 ≥ 40 %", words: ["ansatzweise","nicht durchgängig","(nur) in Ansätzen","noch hinreichend","wenig","nur in Teilen/ teilweise","trotz Unsicherheiten","mit Einschränkungen","meist nur paraphrasierend","teilweise fehlend","noch erkennbar","nicht konsequent"] },
+  { n: 5, pts: "3–1", pct: "3 ≥ 33 % · 2 ≥ 27 % · 1 ≥ 20 %", words: ["kaum","nur zum geringen Teil","zu wenig","selten","nicht hinreichend","meist fehlend","meist nicht nachvollziehbar","nur abschreibend","häufig falsch","meist ungenau","mangelhaft","mit vielen/ erheblichen Mängeln","fast durchgehend fehlerhaft oder oberflächlich"] },
+  { n: 6, pts: "0", pct: "0 unter 20 %", words: ["keinerlei","kein","durchgehend falsch","überhaupt nicht","ungenügend","grob gegen … verstoßend","ausschließlich assoziativ"] }
+];
+
+const SIGNS = {
+  "s. f.": "sachlich falsch", "U": "unvollständig", "Fs": "Fachbegriff falsch verwendet", "FB": "Fachbegriff fehlt / umschrieben",
+  "R": "Rechtschreibung", "Z": "Zeichensetzung", "G": "Grammatik", "(R)": "wiederholter R-Fehler", "√": "fehlendes Wort",
+  "A": "Ausdruck", "Wh.": "Wiederholung", "Log.": "unlogisch", "Zit.": "Zitiertechnik",
+  "… !": "schwerer Fehler", "Op": "Operator verfehlt", "Bel": "Beleg fehlt"
+};
+
+/* Bereiche: Gutachten-Bausteine + Leitfragen zum Beleg + Randkommentare */
+const AREAS = [
+  { id: "auf", tile: "Aufgabenbezug", sub: "Operator erfasst?", title: "Aufgabenbezug", ops: "gilt für alle Anforderungsbereiche", pose: "pruefen",
+    signs: ["Op"],
+    items: [
+      { id: "auf1", t: "Der/ Die Verfasser/in erfasste die Aufgabenstellung und die Operatoren …, z. B. [Beleg].", q: "In welcher Teilaufgabe wurde der Operator verfehlt oder erfüllt?" }
+    ],
+    rand: [
+      ["+", "Operator umgesetzt", "Sie setzen den Operator genau um."],
+      ["−", "Op: beschrieben statt [Operator]", "[Operator] Sie, statt nur zu beschreiben."],
+      ["−", "Bezug zur Aufgabe/ Leitfrage fehlt", "Beziehen Sie sich auf die Leitfrage."]
+    ] },
+  { id: "afb1", tile: "AFB I", sub: "Reproduktion", title: "AFB I", sub2: "Reproduktion", ops: "z. B. beschreiben, benennen, wiedergeben", pose: "willkommen",
+    signs: ["s. f.", "U", "… !"],
+    items: [
+      { id: "a1a", t: "Der/ Die Verfasser/in gab die relevanten Sachverhalte … korrekt/ vollständig/ fachsprachlich präzise wieder, z. B. [Beleg].", q: "Welche Inhalte richtig, welche fehlerhaft oder fehlend?" },
+      { id: "a1b", t: "Die Beschreibung der Materialien gelang …, z. B. [Beleg].", q: "Welche Kernaussagen erfasst, welche übersehen?" },
+      { id: "a1c", t: "Geübte Arbeitstechniken wandte der/ die Verfasser/in … sicher/ korrekt an, z. B. [Beleg].", q: "Welche Technik, mit welchem Ergebnis?" }
+    ],
+    rand: [
+      ["+", "zutreffend und vollständig", "Treffend und vollständig wiedergegeben."],
+      ["−", "U: [Aspekt] fehlt", "Ergänzen Sie [Aspekt]."],
+      ["−", "s. f.: Materialaussage falsch wiedergegeben", "Prüfen Sie die Angaben in M[Nr.]."],
+      ["−", "U: Werte/ Einheiten fehlen", "Nennen Sie Werte mit Einheit."]
+    ] },
+  { id: "afb2", tile: "AFB II", sub: "Reorganisation, Transfer", title: "AFB II", sub2: "Reorganisation und Transfer", ops: "z. B. erläutern, analysieren, vergleichen", pose: "verknuepfen",
+    signs: ["Log.", "Bel"],
+    items: [
+      { id: "a2a", t: "Der/ Die Verfasser/in erklärte/ erläuterte die Zusammenhänge … schlüssig/ differenziert/ nachvollziehbar, z. B. [Beleg].", q: "Welcher Zusammenhang, wie begründet?" },
+      { id: "a2b", t: "Die Auswertung der Materialien war … aufgabenbezogen/ verknüpfend/ materialgestützt, z. B. [Beleg].", q: "Welche Materialien verknüpft, welche nur paraphrasiert?" },
+      { id: "a2c", t: "Bekannte Inhalte und Methoden übertrug der/ die Verfasser/in … auf den neuen Sachverhalt, z. B. [Beleg].", q: "Welcher Transfer gelang, welcher nicht?" },
+      { id: "a2d", t: "Vergleiche und Analysen waren … kriteriengeleitet/ strukturiert, z. B. [Beleg].", q: "Nach welchen Kriterien?" }
+    ],
+    rand: [
+      ["+", "schlüssig verknüpft", "Überzeugende Verknüpfung der Materialien."],
+      ["−", "nur beschrieben, nicht erklärt", "Erklären Sie, warum das so ist."],
+      ["−", "Log.: Zusammenhang behauptet, nicht begründet", "Begründen Sie den Zusammenhang."],
+      ["−", "Material nur paraphrasiert", "Werten Sie das Material aus, statt es nachzuerzählen."],
+      ["−", "Vergleichskriterien fehlen", "Legen Sie Kriterien für den Vergleich fest."]
+    ] },
+  { id: "afb3", tile: "AFB III", sub: "Reflexion, Problemlösung", title: "AFB III", sub2: "Reflexion und Problemlösung", ops: "z. B. beurteilen, bewerten, erörtern", pose: "liste",
+    signs: ["Log."],
+    items: [
+      { id: "a3a", t: "Der/ Die Verfasser/in gelangte zu … begründeten/ eigenständigen Urteilen/ Bewertungen/ Lösungsansätzen, z. B. [Beleg].", q: "Welches Urteil, mit welchen Kriterien?" },
+      { id: "a3b", t: "Die Argumentation war … mehrperspektivisch/ abwägend/ kriteriengeleitet, z. B. [Beleg].", q: "Welche Perspektiven berücksichtigt, welche fehlten?" },
+      { id: "a3c", t: "Grenzen von Materialien, Modellen oder Methoden reflektierte der/ die Verfasser/in …, z. B. [Beleg].", q: "Welche Grenze wurde erkannt?" }
+    ],
+    rand: [
+      ["+", "begründetes, eigenständiges Urteil", "Ihr Urteil ist überzeugend begründet."],
+      ["−", "Urteil ohne Kriterien", "Nennen Sie Ihre Bewertungskriterien."],
+      ["−", "einseitig, Gegenposition fehlt", "Berücksichtigen Sie die Gegenposition."],
+      ["−", "Urteil fehlt", "Kommen Sie zu einem eigenen Urteil."]
+    ] },
+  { id: "dar", tile: "Darstellung", sub: "Gliederung, Sprache, Belege", title: "Darstellungsleistung", ops: "Gliederung, Fachsprache, Materialverweise, sprachliche Richtigkeit", pose: "pruefen",
+    signs: ["R", "Z", "G", "(R)", "√", "A", "Wh.", "Zit.", "FB", "Fs", "Bel"],
+    items: [
+      { id: "d1", t: "Die Darstellung war … gegliedert/ strukturiert/ aufgabenbezogen aufgebaut, z. B. [Beleg].", q: "Einleitung, Fazit, Rückbezug zur Aufgabe?" },
+      { id: "d2", t: "Der/ Die Verfasser/in verwendete die Fachsprache … sicher/ präzise/ angemessen, z. B. [Beleg].", q: "Welche Fachbegriffe sicher, welche falsch oder umgangssprachlich?" },
+      { id: "d3", t: "Aussagen wurden … durch Materialverweise belegt, z. B. [Beleg].", q: "Mit oder ohne Angabe von Material und Zeile?" },
+      { id: "d4", t: "Sprachliche Richtigkeit und äußere Form waren … gegeben, z. B. [Beleg].", q: "Art und Häufigkeit der Fehler; Verständlichkeit beeinträchtigt?" },
+      { id: "d5", opt: true, t: "Wegen schwerwiegender und gehäufter Verstöße gegen die sprachliche Richtigkeit/ äußere Form wird die Bewertung um [1/ 2] Punkt(e) gemindert, z. B. [Beleg].", q: "Art und Häufigkeit der Verstöße" }
+    ],
+    rand: [
+      ["+", "klar gegliedert, Rückbezug zur Aufgabe", "Klare Gliederung mit Rückbezug zur Aufgabe."],
+      ["−", "Bel: Material/ Zeile fehlt", "Belegen Sie mit Material und Zeile."],
+      ["−", "FB: Fachbegriff [Begriff] fehlt", "Verwenden Sie den Fachbegriff [Begriff]."],
+      ["−", "Fs: [Begriff] falsch verwendet", "Prüfen Sie die Bedeutung von [Begriff]."],
+      ["−", "Gedankensprung", "Ergänzen Sie den Zwischenschritt."],
+      ["−", "Fazit fehlt", "Führen Sie Ihre Ergebnisse in einem Fazit zusammen."]
+    ],
+    hint: {
+      abitur: "<b>Abzug:</b> nur bei schwerwiegenden und gehäuften Verstößen, bis zu 2 Punkte, nicht zusätzlich zu fachspezifischen Vorgaben (KMK-Vereinbarung Ziff. 8.4.3; AV Prüfungen Nr. 20).",
+      klausur: "<b>Sprachliche Richtigkeit und äußere Form</b> bei der Bewertung angemessen berücksichtigen; Mängel kennzeichnen (§ 14 Abs. 6 VO-GO)."
+    } },
+  { id: "ges", tile: "Gesamturteil", sub: "EWH, Tendenz, Note", title: "Gesamturteil und Tendenz", ops: "Erfüllung des Erwartungshorizonts, Gewichtung, Note", pose: "liste",
+    signs: [],
+    items: [
+      { id: "g1", t: "Die Arbeit erfüllt den Erwartungshorizont … (rund [x] % der erreichbaren Leistung), z. B. [Beleg].", q: "In welchen Teilaufgaben voll, in welchen nicht?" },
+      { id: "g2", t: "In Teilaufgabe [Nr.] (AFB [I–III]) erbrachte der/ die Verfasser/in … Leistungen, in Teilaufgabe [Nr.] dagegen …, z. B. [Beleg].", q: "Was unterschied die Teilaufgaben?" },
+      { id: "g3", t: "Für eine bessere Bewertung fehlten vor allem Leistungen im Anforderungsbereich [II/ III], z. B. [Beleg].", q: "Wo blieb die Arbeit beschreibend statt erklärend oder urteilend?" },
+      { id: "g4", opt: true, t: "Abweichend von der vorgesehenen Gewichtung wird Teilaufgabe [Nr.] stärker/ schwächer gewichtet, weil [Gesichtspunkt], z. B. [Beleg].", q: "Woran genau zeigt sich der genannte Gesichtspunkt?" },
+      { id: "g5", opt: true, t: "Die im Erwartungshorizont nicht vorgesehene Lösung in Teilaufgabe [Nr.] ist sachlich richtig und wird als gleichwertig anerkannt, weil [Gesichtspunkt].", basis: "AV Prüfungen Nr. 10 Abs. 2" },
+      { id: "g6", opt: true, t: "Die Leistung liegt im oberen/ unteren Drittel der Notenstufe [Note], weil [Gesichtspunkt], z. B. [Beleg].", q: "Woran genau zeigt sich der genannte Gesichtspunkt?" },
+      { id: "g7", t: "Die Arbeit wird mit [Punkte] Punkten (Note [Note]) bewertet." }
+    ],
+    rand: [],
+    hint: {
+      abitur: "<b>Anker (EPA Geographie § 3.5):</b> gut (11 Punkte) setzt umfassende Leistungen in AFB I und II und größere Anteile in AFB III voraus; ausreichend (05 Punkte) Leistungen in AFB I und in Ansätzen in AFB II. Andere Fächer: jeweilige EPA bzw. Bildungsstandards.<br><b>Gutachten:</b> Stärken und Schwächen, Erfüllung des EWH, Note ggf. mit Tendenz (AV Prüfungen Nr. 10 Abs. 5).",
+      klausur: "<b>Klausur:</b> förderliche Hinweise und Besprechung; ab dem 3. Kurshalbjahr gelten die Maßstäbe des Abiturs (§ 14 Abs. 6 VO-GO). Notenschlüssel: Prozentschlüssel der Gesamtkonferenz (§ 15 Abs. 1 VO-GO)."
+    } }
+];
+
+const MODE_NOTE = {
+  klausur: "Randkommentare auch in Anrede. Ab 3. Kurshalbjahr Abiturmaßstab.",
+  abitur: "Neutral, 3. Person, Präteritum. Mindestanteile nach AV Nr. 20."
+};
+
+/* ---------- Zustand ---------- */
+const KEY = "korrekturleitfaden-v1";
+const fresh = () => ({ mode: "abitur", areas: ["afb1"], last: "afb1", arbeit: 1, checks: {}, stage: {}, word: {}, open: {}, wake: false });
+let S = fresh();
+try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+
+/* ---------- Hilfen ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+
+function fmt(t, word) {
+  let h = esc(t).replace(/\[([^\]]+)\]/g, '<em class="ph">[$1]</em>');
+  h = h.replace(/…/g, word ? `<span class="slot">${esc(word)}</span>` : '<span class="slot empty">…</span>');
+  return h;
+}
+function counted(a) { return a.items.filter((i) => !i.opt); }
+function progress(a) { const c = counted(a); return { done: c.filter((i) => S.checks[i.id]).length, all: c.length }; }
+
+/* ---------- Rendern ---------- */
+function renderTiles() {
+  $("#tiles").innerHTML = AREAS.map((a) => {
+    const p = progress(a), on = S.areas.includes(a.id);
+    const prog = p.done ? `<span class="prog${p.done === p.all ? " full" : ""}">${p.done}/${p.all}</span>` : "";
+    return `<button type="button" class="tile" id="tile-${a.id}" data-area="${a.id}" aria-pressed="${on}">${prog}<b>${a.tile}</b><span>${a.sub}</span></button>`;
+  }).join("");
+}
+
+function renderSection(a) {
+  const st = S.stage[a.id], word = S.word[a.id], p = progress(a);
+  const stageObj = STAGES.find((x) => x.n === st);
+  const seg = STAGES.map((x) => `<button type="button" role="radio" id="st-${a.id}-${x.n}" data-stage="${a.id}:${x.n}" aria-checked="${st === x.n}" aria-label="Notenbereich ${x.n}, ${x.pts} Punkte"><b>${x.n}</b><small>${x.pts}</small></button>`).join("");
+  const words = stageObj
+    ? `<div class="words">${stageObj.words.map((w, i) => `<button type="button" class="word" id="w-${a.id}-${i}" data-word="${a.id}:${i}" aria-pressed="${word === w}">${esc(w)}</button>`).join("")}</div>` +
+      (S.mode === "abitur" ? `<span class="pct">Mindestanteil der erreichbaren Leistung: ${stageObj.pct}</span>` : "")
+    : `<p class="stage-empty">Vorläufige Einschätzung antippen – dann erscheinen die passenden Schlüsselwörter.</p>`;
+
+  const items = a.items.map((i) => {
+    const on = !!S.checks[i.id];
+    const leit = i.q ? `<span class="leit"><b>Beleg:</b> ${esc(i.q)}</span>` : i.basis ? `<span class="leit"><b>Grundlage:</b> ${esc(i.basis)}</span>` : "";
+    return `<li><button type="button" class="check" role="checkbox" id="c-${i.id}" data-check="${i.id}" aria-checked="${on}"><span class="box">${CHECK_SVG}</span><span class="txt"><span class="baustein">${i.opt ? '<span class="opt-tag">falls zutreffend</span>' : ""}${fmt(i.t, word)}</span>${leit}</span></button></li>`;
+  }).join("");
+
+  const signs = a.signs.length ? `<span class="signs">${a.signs.map((s) => `<span class="sign"><b>${esc(s)}</b>${esc(SIGNS[s])}</span>`).join("")}</span>` : "";
+  const showAnrede = S.mode === "klausur";
+  const rand = a.rand.length ? `<details class="rand" id="rand-${a.id}" data-rand="${a.id}"${S.open[a.id] === false ? "" : " open"}>
+      <summary><span class="k-label">Am Rand</span>${signs}</summary>
+      <ul class="rand-list">
+        ${showAnrede ? `<li class="rk rk-head" aria-hidden="true"><span></span><span>Neutral</span><span>Anrede (Klausur)</span></li>` : ""}
+        ${a.rand.map(([k, n, an]) => `<li class="rk${showAnrede ? "" : " one"}"><span class="mark${k === "+" ? " plus" : ""}" aria-label="${k === "+" ? "Vorzug" : "Mangel"}">${k}</span><span>${fmt(n)}</span>${showAnrede ? `<span class="anrede">${fmt(an)}</span>` : ""}</li>`).join("")}
+      </ul>
+    </details>` : "";
+  const hint = a.hint ? `<div class="hint">${a.hint[S.mode]}</div>` : "";
+
+  return `<section class="area" id="sec-${a.id}" aria-labelledby="h-${a.id}">
+    <header class="area-head">
+      <h2 id="h-${a.id}">${a.title}${a.sub2 ? ` <span>– ${a.sub2}</span>` : ""}</h2>
+      <span class="count${p.done === p.all ? " full" : ""}">${p.done}/${p.all} geprüft</span>
+      <p class="ops">${a.ops}</p>
+    </header>
+    <div class="stage">
+      <span class="k-label">Notenbereich dieser Teilleistung</span>
+      <div class="seg6" role="radiogroup" aria-label="Notenbereich">${seg}</div>
+      ${words}
+    </div>
+    <ol class="checks">${items}</ol>
+    ${hint}
+    ${rand}
+    <div class="card-foot"><button type="button" id="clr-${a.id}" data-clear="${a.id}">Bereich leeren</button></div>
+  </section>`;
+}
+
+function render() {
+  const focusId = document.activeElement && document.activeElement.id;
+  document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === S.mode));
+  $("#modeNote").textContent = MODE_NOTE[S.mode];
+  $("#arbeitNr").textContent = S.arbeit;
+  const n = Object.values(S.checks).filter(Boolean).length;
+  $("#doneCount").textContent = `${n} abgehakt`;
+  renderTiles();
+  const chosen = AREAS.filter((a) => S.areas.includes(a.id));
+  $("#sections").innerHTML = chosen.length ? chosen.map(renderSection).join("") :
+    `<div class="empty"><strong>Welcher Bereich steht in der Teilaufgabe an?</strong><span>Oben antippen. Mehrere gleichzeitig sind möglich, weil Teilaufgaben meist mehrere Anforderungsbereiche verbinden.</span></div>`;
+  setSunny();
+  if (focusId) { const el = document.getElementById(focusId); if (el) el.focus({ preventScroll: true }); }
+}
+
+let currentPose = "";
+function setSunny() {
+  const a = AREAS.find((x) => x.id === S.last && S.areas.includes(x.id));
+  const pose = a ? a.pose : "willkommen";
+  if (pose === currentPose) return;
+  currentPose = pose;
+  const img = $("#sunnyImg");
+  if (!img.getAttribute("src")) { img.src = IMG[pose]; return; }
+  img.classList.add("swap");
+  setTimeout(() => { img.src = IMG[pose]; img.classList.remove("swap"); }, 180);
+}
+
+/* ---------- Toast mit Rückgängig ---------- */
+let undoState = null, toastTimer = null;
+function toast(msg, prev) {
+  undoState = prev;
+  $("#toastMsg").textContent = msg;
+  $("#toast").hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { $("#toast").hidden = true; undoState = null; }, 7000);
+}
+$("#toastUndo").addEventListener("click", () => {
+  if (undoState) { S = undoState; undoState = null; save(); render(); }
+  $("#toast").hidden = true;
+});
+
+/* ---------- Ereignisse ---------- */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  const d = t.dataset;
+  if (d.mode) { S.mode = d.mode; }
+  else if (d.area) {
+    const i = S.areas.indexOf(d.area);
+    if (i >= 0) { S.areas.splice(i, 1); }
+    else { S.areas.push(d.area); S.last = d.area; requestAnimationFrame(() => { const s = document.getElementById("sec-" + d.area); if (s) s.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); }); }
+    if (!S.areas.includes(S.last)) S.last = S.areas[S.areas.length - 1] || "";
+  }
+  else if (d.stage) {
+    const [id, n] = d.stage.split(":"); const v = +n;
+    if (S.stage[id] === v) { delete S.stage[id]; } else { S.stage[id] = v; }
+    delete S.word[id]; S.last = id;
+  }
+  else if (d.word) {
+    const [id, i] = d.word.split(":"); const w = STAGES.find((x) => x.n === S.stage[id]).words[+i];
+    S.word[id] = S.word[id] === w ? undefined : w; S.last = id;
+  }
+  else if (d.check) { S.checks[d.check] = !S.checks[d.check]; const a = AREAS.find((x) => x.items.some((i) => i.id === d.check)); if (a) S.last = a.id; }
+  else if (d.clear) {
+    const prev = JSON.parse(JSON.stringify(S));
+    const a = AREAS.find((x) => x.id === d.clear);
+    a.items.forEach((i) => delete S.checks[i.id]); delete S.stage[a.id]; delete S.word[a.id];
+    toast(`${a.tile} geleert`, prev);
+  }
+  else if (t.id === "nextBtn") {
+    const prev = JSON.parse(JSON.stringify(S));
+    S.checks = {}; S.stage = {}; S.word = {}; S.arbeit += 1;
+    toast(`Arbeit ${S.arbeit}: alle Haken zurückgesetzt`, prev);
+    window.scrollTo({ top: 0 });
+  }
+  else return;
+  save(); render();
+});
+document.addEventListener("toggle", (e) => {
+  const d = e.target.dataset && e.target.dataset.rand;
+  if (d) { S.open[d] = e.target.open; save(); }
+}, true);
+
+/* ---------- Korrekturzeichen-Dialog ---------- */
+const ZG = [
+  ["Fachliche Fehler", ["s. f.", "sachlich falsche Aussage"], ["U", "unvollständige Angabe"], ["Fs", "fachsprachlicher Fehler: Fachbegriff falsch verwendet"], ["FB", "Fachbegriff fehlt bzw. nur umschrieben"]],
+  ["Sprachliche Fehler", ["R", "Rechtschreibfehler"], ["Z", "Zeichensetzungsfehler"], ["G", "Grammatikfehler"], ["(R)", "wiederholter Rechtschreibfehler"], ["√", "fehlendes Wort"]],
+  ["Inhaltliche und stilistische Mängel", ["A", "umgangssprachlicher bzw. stilistisch unpassender Ausdruck"], ["Wh.", "inhaltliche Redundanz oder sprachliche Wiederholung"], ["Log.", "unlogische Aussage"], ["Zit.", "fehlerhafte Zitiertechnik"]],
+  ["Ergänzungen (Vorschlag)", ["… !", "schwerer Fehler, z. B. s. f.!"], ["Op", "Operator verfehlt"], ["Bel", "Material- oder Zeilenbeleg fehlt"]]
+];
+$("#zeichenBody").innerHTML = ZG.map(([h, ...rows]) => `<div><h3>${h}</h3><dl>${rows.map(([k, v]) => `<dt><b>${esc(k)}</b></dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("") +
+  `<p class="dlg-note">Randkorrekturen dauerhaft lesbar; Korrekturstift und -flüssigkeit unzulässig (AV Prüfungen Nr. 10 Abs. 3).</p>`;
+const dlg = $("#zeichenDlg");
+$("#zeichenBtn").addEventListener("click", () => { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); });
+$("#zeichenClose").addEventListener("click", () => { if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); });
+dlg.addEventListener("click", (e) => { if (e.target === dlg && dlg.close) dlg.close(); });
+
+/* ---------- Bildschirm wach halten ---------- */
+let lock = null;
+async function wake(on) {
+  const st = $("#wakeSt");
+  if (!on) { try { if (lock) await lock.release(); } catch (e) {} lock = null; st.textContent = ""; return; }
+  if (!("wakeLock" in navigator)) { st.textContent = "(nicht verfügbar)"; return; }
+  try { lock = await navigator.wakeLock.request("screen"); st.textContent = "(aktiv)"; lock.addEventListener("release", () => { if (!S.wake) st.textContent = ""; }); }
+  catch (e) { st.textContent = "(nicht verfügbar)"; }
+}
+$("#wakeChk").checked = !!S.wake;
+$("#wakeChk").addEventListener("change", (e) => { S.wake = e.target.checked; save(); wake(S.wake); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.wake) wake(true); });
+if (S.wake) wake(true);
+
+render();
+</script>
