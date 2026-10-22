@@ -65,7 +65,6 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .seg { display: grid; grid-template-columns: 1fr 1fr; border: var(--stroke) solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; background: var(--surface); }
 .seg button { border-radius: 999px; padding: 8px 6px; font-weight: 700; font-size: 0.95rem; min-height: 40px; }
 .seg button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); }
-.mode-note { font-size: 0.82rem; color: var(--muted); margin: -4px 2px 0; }
 
 .arbeit {
   display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 12px;
@@ -152,7 +151,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .leit b { color: var(--ink); font-weight: 700; }
 .opt-tag { display: inline-block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; border: 1px dashed var(--muted); color: var(--muted); border-radius: 999px; padding: 0 7px; margin-right: 6px; vertical-align: 1px; }
 .slot { border-bottom: 2px solid var(--accent); padding: 0 2px; font-weight: 700; color: var(--accent); }
-.slot.empty { color: var(--muted); font-weight: 400; }
+.slot.slot-leer { color: var(--muted); font-weight: 400; }
 .ph { font-style: italic; color: var(--muted); }
 
 .rand { border-top: 1px solid var(--hair); }
@@ -207,18 +206,17 @@ dialog::backdrop { background: rgba(10, 12, 18, .45); }
 @media (max-width: 720px) {
   .app { grid-template-columns: minmax(0, 1fr); }
   .side { position: static; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
-  .brand, .mode-note, .side-links, .sources { grid-column: 1 / -1; }
+  .brand, .side-links, .sources { grid-column: 1 / -1; }
   .sunny { display: none; }
-  .arbeit { grid-column: 2; grid-row: 2 / span 2; }
+  .arbeit { grid-column: 2; grid-row: 2; }
   .seg { grid-column: 1; }
-  .mode-note { grid-column: 1; margin: 0; }
   .side-links { flex-direction: row; flex-wrap: wrap; gap: 4px 18px; }
   .sources { display: none; }
 }
 @media (max-width: 520px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .side { grid-template-columns: minmax(0, 1fr); }
-  .arbeit, .seg, .mode-note { grid-column: 1; grid-row: auto; }
+  .arbeit, .seg { grid-column: 1; grid-row: auto; }
   .rk { grid-template-columns: 26px minmax(0, 1fr); }
   .rk .anrede { grid-column: 2; }
   .rk-head { display: none; }
@@ -236,7 +234,6 @@ dialog::backdrop { background: rgba(10, 12, 18, .45); }
       <button type="button" role="radio" id="mode-klausur" data-mode="klausur">Klausur</button>
       <button type="button" role="radio" id="mode-abitur" data-mode="abitur">Abitur</button>
     </div>
-    <p class="mode-note" id="modeNote"></p>
 
     <div class="arbeit">
       <span class="nr" id="arbeitNr">1</span>
@@ -268,11 +265,16 @@ dialog::backdrop { background: rgba(10, 12, 18, .45); }
 <div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastUndo">Rückgängig</button></div>
 
 <script>
+/* Sunny-Posen: Start, je Bereich eine, und „Bereich vollständig abgehakt“ */
 const IMG = {
-  pruefen: "{{IMG:sunny-pruefen}}",
-  verknuepfen: "{{IMG:sunny-verknuepfen}}",
   willkommen: "{{IMG:sunny-willkommen}}",
-  liste: "{{IMG:sunny-liste}}"
+  pruefen: "{{IMG:sunny-pruefen}}",
+  lesen: "{{IMG:sunny-lesen}}",
+  liste: "{{IMG:sunny-liste}}",
+  melden: "{{IMG:sunny-melden}}",
+  lupe: "{{IMG:sunny-lupe}}",
+  tabelle: "{{IMG:sunny-tabelle}}",
+  abhaken: "{{IMG:sunny-abhaken}}"
 };
 
 /* Notenbereiche: Schlüsselwörter für schriftliche Prüfungen, Mindestanteile nach AV Prüfungen Nr. 20 */
@@ -304,7 +306,7 @@ const AREAS = [
       ["−", "Op: beschrieben statt [Operator]", "[Operator] Sie, statt nur zu beschreiben."],
       ["−", "Bezug zur Aufgabe/ Leitfrage fehlt", "Beziehen Sie sich auf die Leitfrage."]
     ] },
-  { id: "afb1", tile: "AFB I", sub: "Reproduktion", title: "AFB I", sub2: "Reproduktion", ops: "z. B. beschreiben, benennen, wiedergeben", pose: "willkommen",
+  { id: "afb1", tile: "AFB I", sub: "Reproduktion", title: "AFB I", sub2: "Reproduktion", ops: "z. B. beschreiben, benennen, wiedergeben", pose: "lesen",
     signs: ["s. f.", "U", "… !"],
     items: [
       { id: "a1a", t: "Der/ Die Verfasser/in gab die relevanten Sachverhalte … korrekt/ vollständig/ fachsprachlich präzise wieder, z. B. [Beleg].", q: "Welche Inhalte richtig, welche fehlerhaft oder fehlend?" },
@@ -317,7 +319,7 @@ const AREAS = [
       ["−", "s. f.: Materialaussage falsch wiedergegeben", "Prüfen Sie die Angaben in M[Nr.]."],
       ["−", "U: Werte/ Einheiten fehlen", "Nennen Sie Werte mit Einheit."]
     ] },
-  { id: "afb2", tile: "AFB II", sub: "Reorganisation, Transfer", title: "AFB II", sub2: "Reorganisation und Transfer", ops: "z. B. erläutern, analysieren, vergleichen", pose: "verknuepfen",
+  { id: "afb2", tile: "AFB II", sub: "Reorganisation, Transfer", title: "AFB II", sub2: "Reorganisation und Transfer", ops: "z. B. erläutern, analysieren, vergleichen", pose: "liste",
     signs: ["Log.", "Bel"],
     items: [
       { id: "a2a", t: "Der/ Die Verfasser/in erklärte/ erläuterte die Zusammenhänge … schlüssig/ differenziert/ nachvollziehbar, z. B. [Beleg].", q: "Welcher Zusammenhang, wie begründet?" },
@@ -332,7 +334,7 @@ const AREAS = [
       ["−", "Material nur paraphrasiert", "Werten Sie das Material aus, statt es nachzuerzählen."],
       ["−", "Vergleichskriterien fehlen", "Legen Sie Kriterien für den Vergleich fest."]
     ] },
-  { id: "afb3", tile: "AFB III", sub: "Reflexion, Problemlösung", title: "AFB III", sub2: "Reflexion und Problemlösung", ops: "z. B. beurteilen, bewerten, erörtern", pose: "liste",
+  { id: "afb3", tile: "AFB III", sub: "Reflexion, Problemlösung", title: "AFB III", sub2: "Reflexion und Problemlösung", ops: "z. B. beurteilen, bewerten, erörtern", pose: "melden",
     signs: ["Log."],
     items: [
       { id: "a3a", t: "Der/ Die Verfasser/in gelangte zu … begründeten/ eigenständigen Urteilen/ Bewertungen/ Lösungsansätzen, z. B. [Beleg].", q: "Welches Urteil, mit welchen Kriterien?" },
@@ -345,7 +347,7 @@ const AREAS = [
       ["−", "einseitig, Gegenposition fehlt", "Berücksichtigen Sie die Gegenposition."],
       ["−", "Urteil fehlt", "Kommen Sie zu einem eigenen Urteil."]
     ] },
-  { id: "dar", tile: "Darstellung", sub: "Gliederung, Sprache, Belege", title: "Darstellungsleistung", ops: "Gliederung, Fachsprache, Materialverweise, sprachliche Richtigkeit", pose: "pruefen",
+  { id: "dar", tile: "Darstellung", sub: "Gliederung, Sprache, Belege", title: "Darstellungsleistung", ops: "Gliederung, Fachsprache, Materialverweise, sprachliche Richtigkeit", pose: "lupe",
     signs: ["R", "Z", "G", "(R)", "√", "A", "Wh.", "Zit.", "FB", "Fs", "Bel"],
     items: [
       { id: "d1", t: "Die Darstellung war … gegliedert/ strukturiert/ aufgabenbezogen aufgebaut, z. B. [Beleg].", q: "Einleitung, Fazit, Rückbezug zur Aufgabe?" },
@@ -366,7 +368,7 @@ const AREAS = [
       abitur: "<b>Abzug:</b> nur bei schwerwiegenden und gehäuften Verstößen, bis zu 2 Punkte, nicht zusätzlich zu fachspezifischen Vorgaben (KMK-Vereinbarung Ziff. 8.4.3; AV Prüfungen Nr. 20).",
       klausur: "<b>Sprachliche Richtigkeit und äußere Form</b> bei der Bewertung angemessen berücksichtigen; Mängel kennzeichnen (§ 14 Abs. 6 VO-GO)."
     } },
-  { id: "ges", tile: "Gesamturteil", sub: "EWH, Tendenz, Note", title: "Gesamturteil und Tendenz", ops: "Erfüllung des Erwartungshorizonts, Gewichtung, Note", pose: "liste",
+  { id: "ges", tile: "Gesamturteil", sub: "EWH, Tendenz, Note", title: "Gesamturteil und Tendenz", ops: "Erfüllung des Erwartungshorizonts, Gewichtung, Note", pose: "tabelle",
     signs: [],
     items: [
       { id: "g1", t: "Die Arbeit erfüllt den Erwartungshorizont … (rund [x] % der erreichbaren Leistung), z. B. [Beleg].", q: "In welchen Teilaufgaben voll, in welchen nicht?" },
@@ -384,11 +386,6 @@ const AREAS = [
     } }
 ];
 
-const MODE_NOTE = {
-  klausur: "Randkommentare auch in Anrede. Ab 3. Kurshalbjahr Abiturmaßstab.",
-  abitur: "Neutral, 3. Person, Präteritum. Mindestanteile nach AV Nr. 20."
-};
-
 /* ---------- Zustand ---------- */
 const KEY = "korrekturleitfaden-v1";
 const fresh = () => ({ mode: "abitur", areas: ["afb1"], last: "afb1", arbeit: 1, checks: {}, stage: {}, word: {}, open: {}, wake: false });
@@ -403,7 +400,7 @@ const CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke-width="2.6" strok
 
 function fmt(t, word) {
   let h = esc(t).replace(/\[([^\]]+)\]/g, '<em class="ph">[$1]</em>');
-  h = h.replace(/…/g, word ? `<span class="slot">${esc(word)}</span>` : '<span class="slot empty">…</span>');
+  h = h.replace(/…/g, word ? `<span class="slot">${esc(word)}</span>` : '<span class="slot slot-leer">…</span>');
   return h;
 }
 function counted(a) { return a.items.filter((i) => !i.opt); }
@@ -465,7 +462,6 @@ function renderSection(a) {
 function render() {
   const focusId = document.activeElement && document.activeElement.id;
   document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === S.mode));
-  $("#modeNote").textContent = MODE_NOTE[S.mode];
   $("#arbeitNr").textContent = S.arbeit;
   const n = Object.values(S.checks).filter(Boolean).length;
   $("#doneCount").textContent = `${n} abgehakt`;
@@ -480,7 +476,8 @@ function render() {
 let currentPose = "";
 function setSunny() {
   const a = AREAS.find((x) => x.id === S.last && S.areas.includes(x.id));
-  const pose = a ? a.pose : "willkommen";
+  const p = a && progress(a);
+  const pose = !a ? "willkommen" : p.done === p.all ? "abhaken" : a.pose;
   if (pose === currentPose) return;
   currentPose = pose;
   const img = $("#sunnyImg");
