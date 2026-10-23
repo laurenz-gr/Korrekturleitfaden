@@ -180,6 +180,40 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 }
 .empty strong { font-family: var(--display); font-size: 1.25rem; color: var(--ink); }
 
+/* ---------- Ansicht wählen ---------- */
+.tabs { margin-bottom: 8px; max-width: 420px; }
+.tiles.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* ---------- Rand: Nachschlageraster ---------- */
+.panel { border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; scroll-margin-top: 160px; }
+.panel h2 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 1.3rem; line-height: 1.15; }
+.panel h2 span { font-weight: 600; color: var(--muted); font-size: 1rem; }
+.panel .ops { margin: -6px 0 0; font-size: 0.9rem; color: var(--muted); }
+.panel.read { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.notes { display: flex; flex-wrap: wrap; gap: 8px; }
+.note { border: 1.5px solid var(--line); border-radius: 10px; padding: 7px 12px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.note .f { font-size: 1.05rem; }
+.note small { font-size: 0.78rem; color: var(--muted); }
+.z { display: inline-block; background: var(--ink); color: var(--surface); border-radius: 5px; padding: 0 6px; font-family: var(--display); font-weight: 800; margin-right: 4px; white-space: nowrap; }
+.read-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+.read-cols ul { margin: 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 4px; }
+.mini { display: flex; flex-wrap: wrap; gap: 6px; }
+.mini span { border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 11px; font-size: 0.95rem; }
+.dims { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.dim { border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); padding: 12px 14px 8px; }
+.dim.hot { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.dim-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.dim h3 { margin: 0; font-family: var(--display); font-weight: 800; font-size: 1.1rem; line-height: 1.2; }
+.hot-tag { font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: var(--accent); color: var(--accent-ink); white-space: nowrap; }
+.zrow { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 2px 10px; padding-block: 7px; align-items: baseline; }
+.zrow + .zrow { border-top: 1px solid var(--hair); }
+.zrow .z { justify-self: start; }
+.zrow .ex { grid-column: 2; font-size: 0.9rem; color: var(--muted); }
+.zrow .ex q { color: var(--ink); quotes: "„" "“"; }
+.rand-hint { font-size: 0.85rem; color: var(--muted); margin: 0; }
+@media (max-width: 1000px) { .dims { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) { .read-cols { grid-template-columns: minmax(0, 1fr); } }
+
 /* ---------- Dialog & Toast ---------- */
 dialog { border: var(--stroke) solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); padding: 0; width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px); }
 dialog::backdrop { background: rgba(10, 12, 18, .45); }
@@ -245,22 +279,22 @@ dialog::backdrop { background: rgba(10, 12, 18, .45); }
     <figure class="sunny"><img id="sunnyImg" alt="Sunny, die Leitfigur des Korrekturleitfadens" src=""></figure>
 
     <div class="side-links">
-      <button type="button" class="link-btn" id="zeichenBtn">Alle Korrekturzeichen</button>
       <label class="wake"><input type="checkbox" id="wakeChk"> Bildschirm wach halten <span class="st" id="wakeSt"></span></label>
     </div>
     <p class="sources">Rechtsgrundlagen: AV Prüfungen Nr. 10, 20 · VO-GO § 14, 15 · KMK-Vereinbarung Ziff. 8.4.3 · EPA Geographie § 2, 3.5</p>
   </aside>
 
   <main class="main">
-    <div class="tiles-wrap"><nav class="tiles" id="tiles" aria-label="Bereich der Teilaufgabe"></nav></div>
+    <div class="tiles-wrap">
+      <div class="seg tabs" role="radiogroup" aria-label="Ansicht" id="tabSeg">
+        <button type="button" role="radio" id="tab-rand" data-tab="rand">Rand</button>
+        <button type="button" role="radio" id="tab-gut" data-tab="gut">Gutachten</button>
+      </div>
+      <nav class="tiles" id="tiles" aria-label="Bereich der Teilaufgabe"></nav>
+    </div>
     <div id="sections" class="main"></div>
   </main>
 </div>
-
-<dialog id="zeichenDlg" aria-labelledby="zeichenTitle">
-  <div class="dlg-head"><h2 id="zeichenTitle">Korrekturzeichen</h2><button type="button" id="zeichenClose">Schließen</button></div>
-  <div class="dlg-body" id="zeichenBody"></div>
-</dialog>
 
 <div class="toast" id="toast" role="status" hidden><span id="toastMsg"></span><button type="button" id="toastUndo">Rückgängig</button></div>
 
@@ -287,17 +321,9 @@ const STAGES = [
   { n: 6, pts: "0", pct: "0 unter 20 %", words: ["keinerlei","kein","durchgehend falsch","überhaupt nicht","ungenügend","grob gegen … verstoßend","ausschließlich assoziativ"] }
 ];
 
-const SIGNS = {
-  "s. f.": "sachlich falsch", "U": "unvollständig", "Fs": "Fachbegriff falsch verwendet", "FB": "Fachbegriff fehlt / umschrieben",
-  "R": "Rechtschreibung", "Z": "Zeichensetzung", "G": "Grammatik", "(R)": "wiederholter R-Fehler", "√": "fehlendes Wort",
-  "A": "Ausdruck", "Wh.": "Wiederholung", "Log.": "unlogisch", "Zit.": "Zitiertechnik",
-  "… !": "schwerer Fehler", "Op": "Operator verfehlt", "Bel": "Beleg fehlt"
-};
-
 /* Bereiche: Gutachten-Bausteine + Leitfragen zum Beleg + Randkommentare */
 const AREAS = [
   { id: "auf", tile: "Aufgabenbezug", sub: "Operator erfasst?", title: "Aufgabenbezug", ops: "gilt für alle Anforderungsbereiche", pose: "pruefen",
-    signs: ["Op"],
     items: [
       { id: "auf1", t: "Der/ Die Verfasser/in erfasste die Aufgabenstellung und die Operatoren …, z. B. [Beleg].", q: "In welcher Teilaufgabe wurde der Operator verfehlt oder erfüllt?" }
     ],
@@ -307,7 +333,6 @@ const AREAS = [
       ["−", "Bezug zur Aufgabe/ Leitfrage fehlt", "Beziehen Sie sich auf die Leitfrage."]
     ] },
   { id: "afb1", tile: "AFB I", sub: "Reproduktion", title: "AFB I", sub2: "Reproduktion", ops: "z. B. beschreiben, benennen, wiedergeben", pose: "lesen",
-    signs: ["s. f.", "U", "… !"],
     items: [
       { id: "a1a", t: "Der/ Die Verfasser/in gab die relevanten Sachverhalte … korrekt/ vollständig/ fachsprachlich präzise wieder, z. B. [Beleg].", q: "Welche Inhalte richtig, welche fehlerhaft oder fehlend?" },
       { id: "a1b", t: "Die Beschreibung der Materialien gelang …, z. B. [Beleg].", q: "Welche Kernaussagen erfasst, welche übersehen?" },
@@ -320,7 +345,6 @@ const AREAS = [
       ["−", "U: Werte/ Einheiten fehlen", "Nennen Sie Werte mit Einheit."]
     ] },
   { id: "afb2", tile: "AFB II", sub: "Reorganisation, Transfer", title: "AFB II", sub2: "Reorganisation und Transfer", ops: "z. B. erläutern, analysieren, vergleichen", pose: "liste",
-    signs: ["Log.", "Bel"],
     items: [
       { id: "a2a", t: "Der/ Die Verfasser/in erklärte/ erläuterte die Zusammenhänge … schlüssig/ differenziert/ nachvollziehbar, z. B. [Beleg].", q: "Welcher Zusammenhang, wie begründet?" },
       { id: "a2b", t: "Die Auswertung der Materialien war … aufgabenbezogen/ verknüpfend/ materialgestützt, z. B. [Beleg].", q: "Welche Materialien verknüpft, welche nur paraphrasiert?" },
@@ -335,7 +359,6 @@ const AREAS = [
       ["−", "Vergleichskriterien fehlen", "Legen Sie Kriterien für den Vergleich fest."]
     ] },
   { id: "afb3", tile: "AFB III", sub: "Reflexion, Problemlösung", title: "AFB III", sub2: "Reflexion und Problemlösung", ops: "z. B. beurteilen, bewerten, erörtern", pose: "melden",
-    signs: ["Log."],
     items: [
       { id: "a3a", t: "Der/ Die Verfasser/in gelangte zu … begründeten/ eigenständigen Urteilen/ Bewertungen/ Lösungsansätzen, z. B. [Beleg].", q: "Welches Urteil, mit welchen Kriterien?" },
       { id: "a3b", t: "Die Argumentation war … mehrperspektivisch/ abwägend/ kriteriengeleitet, z. B. [Beleg].", q: "Welche Perspektiven berücksichtigt, welche fehlten?" },
@@ -348,7 +371,6 @@ const AREAS = [
       ["−", "Urteil fehlt", "Kommen Sie zu einem eigenen Urteil."]
     ] },
   { id: "dar", tile: "Darstellung", sub: "Gliederung, Sprache, Belege", title: "Darstellungsleistung", ops: "Gliederung, Fachsprache, Materialverweise, sprachliche Richtigkeit", pose: "lupe",
-    signs: ["R", "Z", "G", "(R)", "√", "A", "Wh.", "Zit.", "FB", "Fs", "Bel"],
     items: [
       { id: "d1", t: "Die Darstellung war … gegliedert/ strukturiert/ aufgabenbezogen aufgebaut, z. B. [Beleg].", q: "Einleitung, Fazit, Rückbezug zur Aufgabe?" },
       { id: "d2", t: "Der/ Die Verfasser/in verwendete die Fachsprache … sicher/ präzise/ angemessen, z. B. [Beleg].", q: "Welche Fachbegriffe sicher, welche falsch oder umgangssprachlich?" },
@@ -369,7 +391,6 @@ const AREAS = [
       klausur: "<b>Sprachliche Richtigkeit und äußere Form</b> bei der Bewertung angemessen berücksichtigen; Mängel kennzeichnen (§ 14 Abs. 6 VO-GO)."
     } },
   { id: "ges", tile: "Gesamturteil", sub: "EWH, Tendenz, Note", title: "Gesamturteil und Tendenz", ops: "Erfüllung des Erwartungshorizonts, Gewichtung, Note", pose: "tabelle",
-    signs: [],
     items: [
       { id: "g1", t: "Die Arbeit erfüllt den Erwartungshorizont … (rund [x] % der erreichbaren Leistung), z. B. [Beleg].", q: "In welchen Teilaufgaben voll, in welchen nicht?" },
       { id: "g2", t: "In Teilaufgabe [Nr.] (AFB [I–III]) erbrachte der/ die Verfasser/in … Leistungen, in Teilaufgabe [Nr.] dagegen …, z. B. [Beleg].", q: "Was unterschied die Teilaufgaben?" },
@@ -386,9 +407,61 @@ const AREAS = [
     } }
 ];
 
+/* ---------- Rand: Nachschlageraster ---------- */
+/* Häufigste Randnotizen der Lehrkraft: Zeichen + kurze Begründung an der Stelle */
+const TOP = [
+  ["U:", "[Grund für Ungenauigkeit]", "unvollständig oder ungenau"],
+  ["A:", "besser: [Fachbegriff/ Fachsprache]", "Ausdruck"],
+  ["s. f.:", "[Grund]", "sachlich falsch"],
+  ["G:", "Satzbau", "Grammatik"],
+  ["R", "", "Rechtschreibung"]
+];
+
+/* Prüfdimensionen gelten in jeder Aufgabe; afb = wo sie besonders tragen */
+const DIMS = [
+  { id: "gen", title: "Fachliche Richtigkeit und Genauigkeit", afb: ["afb1", "afb2"], rows: [
+    ["s. f.", "sachlich falsche Aussage", ["s. f.: [Grund]", "s. f.: Materialaussage falsch"]],
+    ["U", "unvollständige oder ungenaue Angabe", ["U: [was fehlt/ ungenau ist]", "U: zu allgemein", "U: Wert/ Einheit fehlt"]]
+  ] },
+  { id: "log", title: "Logik und Argumentation", afb: ["afb2", "afb3"], rows: [
+    ["Log.", "unlogische Aussage", ["Log.: [warum]", "Log.: nur behauptet", "Log.: Sprung"]],
+    ["Wh.", "inhaltliche Redundanz oder sprachliche Wiederholung", []]
+  ] },
+  { id: "mat", title: "Material und Beleg", afb: ["afb1", "afb2"], rows: [
+    ["Bel", "Material- oder Zeilenbeleg fehlt", ["Bel: M?", "Bel: Z.?"]],
+    ["Zit.", "fehlerhafte Zitiertechnik", []]
+  ] },
+  { id: "op", title: "Aufgabenbezug", afb: ["afb3"], rows: [
+    ["Op", "Operator verfehlt", ["Op: nur beschrieben", "Op: Urteil fehlt"]]
+  ] },
+  { id: "fach", title: "Fachsprache und Ausdruck", afb: [], rows: [
+    ["A", "umgangssprachlicher bzw. stilistisch unpassender Ausdruck", ["A: besser: [Fachbegriff]"]],
+    ["FB", "Fachbegriff fehlt bzw. nur umschrieben", ["FB: [Begriff]"]],
+    ["Fs", "Fachbegriff falsch verwendet", ["Fs: gemeint ist [Begriff]"]]
+  ] },
+  { id: "spr", title: "Sprachliche Richtigkeit", afb: [], rows: [
+    ["R", "Rechtschreibfehler", []],
+    ["(R)", "wiederholter Rechtschreibfehler", []],
+    ["Z", "Zeichensetzungsfehler", []],
+    ["G", "Grammatikfehler", ["G: Satzbau", "G: Bezug", "G: Tempus"]],
+    ["√", "fehlendes Wort", []]
+  ] },
+  { id: "gew", title: "Vorzüge und Gewicht", afb: [], rows: [
+    ["✓", "zutreffend, gelungen", []],
+    ["… !", "schwerer Fehler", ["s. f.!", "Log.!"]]
+  ] }
+];
+
+/* Typische Randnotizen je AFB: Kurzform der Mängel, die im Gutachten ausformuliert werden */
+const READ = {
+  afb1: ["U: [Aspekt] fehlt", "U: Wert/ Einheit fehlt", "s. f.: Materialaussage falsch", "Bel: M?"],
+  afb2: ["Log.: warum?", "Log.: nur behauptet", "nur paraphrasiert", "U: Zusammenhang unvollständig", "Kriterien?"],
+  afb3: ["Urteil?", "Kriterien?", "Gegenposition?", "Op: nur beschrieben", "Log.: Begründung fehlt"]
+};
+
 /* ---------- Zustand ---------- */
 const KEY = "korrekturleitfaden-v1";
-const fresh = () => ({ mode: "abitur", areas: ["afb1"], last: "afb1", arbeit: 1, checks: {}, stage: {}, word: {}, open: {}, wake: false });
+const fresh = () => ({ tab: "rand", mode: "abitur", areas: ["afb2"], last: "afb2", arbeit: 1, checks: {}, stage: {}, word: {}, open: {}, wake: false });
 let S = fresh();
 try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(fresh(), JSON.parse(raw)); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
@@ -407,10 +480,13 @@ function counted(a) { return a.items.filter((i) => !i.opt); }
 function progress(a) { const c = counted(a); return { done: c.filter((i) => S.checks[i.id]).length, all: c.length }; }
 
 /* ---------- Rendern ---------- */
+const isAfb = (id) => /^afb/.test(id);
 function renderTiles() {
-  $("#tiles").innerHTML = AREAS.map((a) => {
+  const list = S.tab === "rand" ? AREAS.filter((a) => isAfb(a.id)) : AREAS;
+  $("#tiles").classList.toggle("three", list.length === 3);
+  $("#tiles").innerHTML = list.map((a) => {
     const p = progress(a), on = S.areas.includes(a.id);
-    const prog = p.done ? `<span class="prog${p.done === p.all ? " full" : ""}">${p.done}/${p.all}</span>` : "";
+    const prog = S.tab === "gut" && p.done ? `<span class="prog${p.done === p.all ? " full" : ""}">${p.done}/${p.all}</span>` : "";
     return `<button type="button" class="tile" id="tile-${a.id}" data-area="${a.id}" aria-pressed="${on}">${prog}<b>${a.tile}</b><span>${a.sub}</span></button>`;
   }).join("");
 }
@@ -430,12 +506,11 @@ function renderSection(a) {
     return `<li><button type="button" class="check" role="checkbox" id="c-${i.id}" data-check="${i.id}" aria-checked="${on}"><span class="box">${CHECK_SVG}</span><span class="txt"><span class="baustein">${i.opt ? '<span class="opt-tag">falls zutreffend</span>' : ""}${fmt(i.t, word)}</span>${leit}</span></button></li>`;
   }).join("");
 
-  const signs = a.signs.length ? `<span class="signs">${a.signs.map((s) => `<span class="sign"><b>${esc(s)}</b>${esc(SIGNS[s])}</span>`).join("")}</span>` : "";
   const showAnrede = S.mode === "klausur";
   const rand = a.rand.length ? `<details class="rand" id="rand-${a.id}" data-rand="${a.id}"${S.open[a.id] === false ? "" : " open"}>
-      <summary><span class="k-label">Am Rand</span>${signs}</summary>
+      <summary><span class="k-label">Formulierungen</span><span class="signs">${showAnrede ? "Gutachten · förderliche Hinweise" : "für das Gutachten"}</span></summary>
       <ul class="rand-list">
-        ${showAnrede ? `<li class="rk rk-head" aria-hidden="true"><span></span><span>Neutral</span><span>Anrede (Klausur)</span></li>` : ""}
+        ${showAnrede ? `<li class="rk rk-head" aria-hidden="true"><span></span><span>Gutachten (neutral)</span><span>Förderlicher Hinweis (Klausur)</span></li>` : ""}
         ${a.rand.map(([k, n, an]) => `<li class="rk${showAnrede ? "" : " one"}"><span class="mark${k === "+" ? " plus" : ""}" aria-label="${k === "+" ? "Vorzug" : "Mangel"}">${k}</span><span>${fmt(n)}</span>${showAnrede ? `<span class="anrede">${fmt(an)}</span>` : ""}</li>`).join("")}
       </ul>
     </details>` : "";
@@ -459,15 +534,47 @@ function renderSection(a) {
   </section>`;
 }
 
+const fmtR = (t) => esc(t).replace(/\[([^\]]+)\]/g, '<em class="ph">[$1]</em>');
+
+function renderRand() {
+  const sel = AREAS.filter((a) => isAfb(a.id) && S.areas.includes(a.id));
+  const selIds = sel.map((a) => a.id);
+  const top = `<section class="panel" aria-labelledby="h-top">
+      <h2 id="h-top">Häufigste Randnotizen</h2>
+      <div class="notes">${TOP.map(([z, f, m]) => `<span class="note"><span class="f"><span class="z">${esc(z)}</span>${fmtR(f)}</span><small>${m}</small></span>`).join("")}</div>
+    </section>`;
+  const reads = sel.map((a) => `<section class="panel read" id="sec-${a.id}" aria-labelledby="h-${a.id}">
+      <h2 id="h-${a.id}">${a.title} <span>– ${a.sub2}</span></h2>
+      <p class="ops">${a.ops}</p>
+      <div class="read-cols">
+        <div><span class="k-label">Beim Lesen prüfen</span><ul>${a.items.filter((i) => i.q).map((i) => `<li>${esc(i.q)}</li>`).join("")}</ul></div>
+        <div><span class="k-label">Typisch am Rand</span><div class="mini">${READ[a.id].map((n) => `<span>${fmtR(n)}</span>`).join("")}</div></div>
+      </div>
+    </section>`).join("");
+  const hot = (d) => d.afb.filter((x) => selIds.includes(x));
+  const dims = [...DIMS].sort((x, y) => (hot(y).length > 0) - (hot(x).length > 0));
+  const grid = `<div class="dims">${dims.map((d) => {
+    const h = hot(d);
+    const tag = h.length ? `<span class="hot-tag">zentral in ${h.map((x) => AREAS.find((a) => a.id === x).tile).join(", ")}</span>` : "";
+    return `<section class="dim${h.length ? " hot" : ""}" aria-labelledby="h-dim-${d.id}">
+      <div class="dim-head"><h3 id="h-dim-${d.id}">${d.title}</h3>${tag}</div>
+      ${d.rows.map(([z, m, ex]) => `<div class="zrow"><span class="z">${esc(z)}</span><span>${esc(m)}</span>${ex.length ? `<span class="ex">${ex.map((e) => `<q>${fmtR(e)}</q>`).join(" · ")}</span>` : ""}</div>`).join("")}
+    </section>`;
+  }).join("")}</div>`;
+  const hint = sel.length ? "" : `<p class="rand-hint">AFB der Teilaufgabe antippen: Dann erscheinen die Prüffragen, und die zentralen Dimensionen rücken nach oben.</p>`;
+  return top + reads + hint + grid + `<p class="rand-hint">Am Rand Vorzüge, Beanstandungen und Fehler vermerken; Gewicht der Lösung und Schwere des Fehlers erkennbar machen (AV Prüfungen Nr. 10 Abs. 3).</p>`;
+}
+
 function render() {
   const focusId = document.activeElement && document.activeElement.id;
   document.querySelectorAll("#modeSeg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.mode === S.mode));
   $("#arbeitNr").textContent = S.arbeit;
   const n = Object.values(S.checks).filter(Boolean).length;
   $("#doneCount").textContent = `${n} abgehakt`;
+  document.querySelectorAll("#tabSeg button").forEach((b) => b.setAttribute("aria-checked", b.dataset.tab === S.tab));
   renderTiles();
   const chosen = AREAS.filter((a) => S.areas.includes(a.id));
-  $("#sections").innerHTML = chosen.length ? chosen.map(renderSection).join("") :
+  $("#sections").innerHTML = S.tab === "rand" ? renderRand() : chosen.length ? chosen.map(renderSection).join("") :
     `<div class="empty"><strong>Welcher Bereich steht in der Teilaufgabe an?</strong><span>Oben antippen. Mehrere gleichzeitig sind möglich, weil Teilaufgaben meist mehrere Anforderungsbereiche verbinden.</span></div>`;
   setSunny();
   if (focusId) { const el = document.getElementById(focusId); if (el) el.focus({ preventScroll: true }); }
@@ -475,9 +582,9 @@ function render() {
 
 let currentPose = "";
 function setSunny() {
-  const a = AREAS.find((x) => x.id === S.last && S.areas.includes(x.id));
+  const a = AREAS.find((x) => x.id === S.last && S.areas.includes(x.id) && (S.tab === "gut" || isAfb(x.id)));
   const p = a && progress(a);
-  const pose = !a ? "willkommen" : p.done === p.all ? "abhaken" : a.pose;
+  const pose = S.tab === "rand" ? (a ? a.pose : "lupe") : !a ? "willkommen" : p.done === p.all ? "abhaken" : a.pose;
   if (pose === currentPose) return;
   currentPose = pose;
   const img = $("#sunnyImg");
@@ -506,11 +613,12 @@ document.addEventListener("click", (e) => {
   if (!t) return;
   const d = t.dataset;
   if (d.mode) { S.mode = d.mode; }
+  else if (d.tab) { S.tab = d.tab; if (!S.areas.includes(S.last)) S.last = S.areas[S.areas.length - 1] || ""; }
   else if (d.area) {
     const i = S.areas.indexOf(d.area);
     if (i >= 0) { S.areas.splice(i, 1); }
     else { S.areas.push(d.area); S.last = d.area; requestAnimationFrame(() => { const s = document.getElementById("sec-" + d.area); if (s) s.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" }); }); }
-    if (!S.areas.includes(S.last)) S.last = S.areas[S.areas.length - 1] || "";
+    if (!S.areas.includes(S.last)) S.last = [...S.areas].reverse().find((x) => S.tab === "gut" || isAfb(x)) || "";
   }
   else if (d.stage) {
     const [id, n] = d.stage.split(":"); const v = +n;
@@ -541,20 +649,6 @@ document.addEventListener("toggle", (e) => {
   const d = e.target.dataset && e.target.dataset.rand;
   if (d) { S.open[d] = e.target.open; save(); }
 }, true);
-
-/* ---------- Korrekturzeichen-Dialog ---------- */
-const ZG = [
-  ["Fachliche Fehler", ["s. f.", "sachlich falsche Aussage"], ["U", "unvollständige Angabe"], ["Fs", "fachsprachlicher Fehler: Fachbegriff falsch verwendet"], ["FB", "Fachbegriff fehlt bzw. nur umschrieben"]],
-  ["Sprachliche Fehler", ["R", "Rechtschreibfehler"], ["Z", "Zeichensetzungsfehler"], ["G", "Grammatikfehler"], ["(R)", "wiederholter Rechtschreibfehler"], ["√", "fehlendes Wort"]],
-  ["Inhaltliche und stilistische Mängel", ["A", "umgangssprachlicher bzw. stilistisch unpassender Ausdruck"], ["Wh.", "inhaltliche Redundanz oder sprachliche Wiederholung"], ["Log.", "unlogische Aussage"], ["Zit.", "fehlerhafte Zitiertechnik"]],
-  ["Ergänzungen (Vorschlag)", ["… !", "schwerer Fehler, z. B. s. f.!"], ["Op", "Operator verfehlt"], ["Bel", "Material- oder Zeilenbeleg fehlt"]]
-];
-$("#zeichenBody").innerHTML = ZG.map(([h, ...rows]) => `<div><h3>${h}</h3><dl>${rows.map(([k, v]) => `<dt><b>${esc(k)}</b></dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`).join("") +
-  `<p class="dlg-note">Randkorrekturen dauerhaft lesbar; Korrekturstift und -flüssigkeit unzulässig (AV Prüfungen Nr. 10 Abs. 3).</p>`;
-const dlg = $("#zeichenDlg");
-$("#zeichenBtn").addEventListener("click", () => { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", ""); });
-$("#zeichenClose").addEventListener("click", () => { if (dlg.close) dlg.close(); else dlg.removeAttribute("open"); });
-dlg.addEventListener("click", (e) => { if (e.target === dlg && dlg.close) dlg.close(); });
 
 /* ---------- Bildschirm wach halten ---------- */
 let lock = null;
